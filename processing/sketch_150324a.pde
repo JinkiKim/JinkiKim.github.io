@@ -1,22 +1,13 @@
-import java.awt.Point;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseWheelEvent;
-import java.awt.event.MouseListener;
-import java.awt.event.MouseMotionListener;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Collections;
-import java.util.Comparator;
-import net.foxtail.file.FTFile;
-import net.foxtail.file.FTReadCSV;
-import net.foxtail.utils.FTUtil;
+//import java.awt.event.MouseWheelEvent;
 
-Point mp;
-Point drag;
-Point present;
+int dragX;
+int dragY;
+int presentX;
+int presentY;
 boolean dragging;
 PShape bg;
 PShape btn1;
+PShape btnE;
 PShape btn2;
 PShape btn3;
 PFont font;
@@ -53,7 +44,8 @@ ArrayList<Station> stations = new ArrayList<Station>();
 Table csv;
 int transX;
 int transY;
-
+boolean eventClick;
+int eventSelect;
 
 //  String readAll = FTFile.Read("https://JinkiKim.github.io/stations/"+ "가락시장"+".csv","csv");
 //  FTReadCSV Acsv = new FTReadCSV();
@@ -63,7 +55,8 @@ int transY;
 
 class Station{
     
-    Point pos;
+    int posX;
+    int posY;
     int line;
     int value;
     int v1;
@@ -72,8 +65,9 @@ class Station{
     boolean mouseOn;
     
     
-      Station(Point p,String name,int l,int val,int val2){
-        pos = p;
+      Station(int px,int py,String name,int l,int val,int val2){
+        posX = px;
+        posY = py;
         line = l;
         v1 = val;
         v2 = val2;
@@ -89,7 +83,6 @@ class Station{
             }
         }
         sName = name;
-      //  mouseOn=false;
       }
      
   }
@@ -98,14 +91,15 @@ void setup(){
   
   //-------- background Image --------//
   size(1600,1100);
- // bg = loadShape("./bgimg.svg");
- String url = "https://JinkiKim.github.io/processing/bgimg.svg";
+ String url = "https://JinkiKim.github.io/processing/svg/bgimg.svg";
   bg = loadShape(url,"svg");
- String urlbtn1 = "https://JinkiKim.github.io/processing/event.svg";
- String urlbtn2 = "https://JinkiKim.github.io/processing/monthday.svg";
- String urlbtn3 = "https://JinkiKim.github.io/processing/time.svg";
+ String urlbtn1 = "https://JinkiKim.github.io/processing/svg/event.svg";
+ String urlbtnE = "https://JinkiKim.github.io/processing/svg/eventE.svg";
+ String urlbtn2 = "https://JinkiKim.github.io/processing/svg/monthday.svg";
+ String urlbtn3 = "https://JinkiKim.github.io/processing/svg/time.svg";
 
   btn1 = loadShape(urlbtn1,"svg");
+  btnE = loadShape(urlbtnE,"svg");
   btn2 = loadShape(urlbtn2,"svg");
   btn3 = loadShape(urlbtn3,"svg");
   xs = 0;
@@ -115,8 +109,12 @@ void setup(){
   transX = 0;
   transY = 0;
   dragging = false;
-  drag = new Point(0,0);  
-  present = new Point(0,0);
+  dragX=0;
+  dragY=0;  
+  presentX = 0;
+  presentY = 0;
+  eventClick = false;
+  eventSelect = -1;
   //----------------- font ------------------//
  
   font = createFont("NanumGothicBold",48);
@@ -152,37 +150,47 @@ void setup(){
            a6 = "00" + a6;
          }
          
-         b = Integer.parseInt(a6);
+         b = int(a6);
          
          try{
-         stations.add(new Station( new Point( a0, a1), a2, a3, a5, b ) );
+         stations.add(new Station( a0, a1, a2, a3, a5, b ) );
          }
          catch(NumberFormatException e){
-           System.out.println(i);
+           
          }
        }
        
  // -- date select test -- //
  
- dateSelect(3,1,12);
+ dateSelect(3,1,14);
  
  //------------ sort -------------//
  
- List bbs = stations;
- List stts = new ArrayList<Station>(); 
- 
- Collections.sort(bbs, new NoAscCompare());
- for(Station stt : stations){
-    stts.add(stt);
+ ArrayList<Station> bbs = new ArrayList<Station>();
+ IntDict ind = new IntDict();
+ for(Station s : stations){
+   ind.set(s.sName, s.value);
  }
- stations = (ArrayList)stts;
+   ind.sortValues();
+   String[] strL = ind.keyArray();
+   
+   for(String str : strL){
+     for( int i =0; i< stations.size(); i++){
+       if(stations.get(i).sName.equals(str)){
+         bbs.add(stations.get(i));
+         break;
+       }
+     }
+   }
+   
+   stations = bbs;
  
  //------------ MouseListener --------------//
- addMouseWheelListener(new java.awt.event.MouseWheelListener(){
- public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt){
-   mouseWheel(evt);
- }});
- 
+// addMouseWheelListener(new java.awt.event.MouseWheelListener(){
+// public void mouseWheelMoved(java.awt.event.MouseWheelEvent evt){
+//   mouseWheel(evt);
+// }});
+// 
  //-------------- Clock ---------------//
   x=900;
   y=50;
@@ -196,83 +204,92 @@ void setup(){
  //-------------- Station -------------//
  
 }
-static class NoAscCompare implements Comparator<Station> {
- 
-    /**
-     * 오름차순(ASC)
-     */
-    @Override
-    public int compare(Station arg0, Station arg1) {
-      // TODO Auto-generated method stub
-      return arg0.value < arg1.value ? -1 : arg0.value > arg1.value ? 1:0;
-    }
- 
-}
+//static class NoAscCompare implements Comparator<Station> {
+// 
+//    /**
+//     * 오름차순(ASC)
+//     */
+//    @Override
+//    public int compare(Station arg0, Station arg1) {
+//      // TODO Auto-generated method stub
+//      return arg0.value < arg1.value ? -1 : arg0.value > arg1.value ? 1:0;
+//    }
+// 
+//}
 void draw(){
     
   //--------------- Zoom ----------------//
+  
     scale(zoom);
     rotate (angle);
- 
-  //-------------- Station --------------//
-  
-  background(0);
-  shape(bg, transX + xs, transY + ys , xo, yo);
- // image(btn1, transX + 247.896, transY + 48.152 , 179, 34);
- // image(btn2, transX + 471.118, transY + 48.152 , 179, 34);
- // image(btn3, transX + 664.479, transY + 48.152 , 179, 34);
- shape(btn1, transX + 247.896, transY + 48.152 , 179, 34);
- shape(btn2, transX + 471.118, transY + 48.152 , 179, 34);
- shape(btn3, transX + 664.479, transY + 48.152 , 179, 34);
 
+  //------------ background -------------//
+ 
+   background(0);
+   shape(bg, transX + xs, transY + ys , xo, yo);
+
+  //-------------- Station --------------//
+ 
 
   for(int ii = 0; ii< stations.size(); ii++){
     
-    drawStroke(stations.get(ii).pos.x,stations.get(ii).pos.y,stations.get(ii).value+2,stations.get(ii).line,150,5);
-    drawGradient(stations.get(ii).pos.x,stations.get(ii).pos.y,stations.get(ii).value,0);
+    drawStroke(stations.get(ii).posX,stations.get(ii).posY,stations.get(ii).value+2,stations.get(ii).line,150,5);
+    drawGradient(stations.get(ii).posX,stations.get(ii).posY,stations.get(ii).value,0);
   
   }
   
    for(int ii = 0; ii< stations.size(); ii++){
      
-  
-     
   //--------- mouse hover ----------//
   
-  if(overCircle(stations.get(ii).pos.x-1,stations.get(ii).pos.y,stations.get(ii).value*2*zoom+3) & !on){
+  if(overCircle(stations.get(ii).posX-1,stations.get(ii).posY,stations.get(ii).value*2*zoom+3) & !on){
     
       on = true;
-    drawStroke(stations.get(ii).pos.x,stations.get(ii).pos.y,stations.get(ii).value+3,stations.get(ii).line,255,5);
-    drawGradient(stations.get(ii).pos.x,stations.get(ii).pos.y,stations.get(ii).value,1);
+    drawStroke(stations.get(ii).posX,stations.get(ii).posY,stations.get(ii).value+3,stations.get(ii).line,255,5);
+    drawGradient(stations.get(ii).posX,stations.get(ii).posY,stations.get(ii).value,1);
     
   
-  rectMode(CENTER);
-  stroke(190);
-  fill(200);
-  rect(transX + stations.get(ii).pos.x,transY + stations.get(ii).pos.y -stations.get(ii).value-25 ,100,50,12,12,12,12 );          
-  
-  
-  pushMatrix();
-  translate(transX + stations.get(ii).pos.x,transY + stations.get(ii).pos.y -stations.get(ii).value-25);
-  stroke(0);
-  popMatrix();
+    rectMode(CENTER);
+    stroke(190);
+    fill(200);
+    rect(transX + stations.get(ii).posX,transY + stations.get(ii).posY -stations.get(ii).value-25 ,100,50,12,12,12,12 );          
     
-  fill(#000000);
-  textAlign(CENTER);
-  textSize(12);
-  
-  if(drawData==0){
-  text(stations.get(ii).sName+"\n"+stations.get(ii).v1+""+stations.get(ii).v2+"명",transX + stations.get(ii).pos.x,transY + stations.get(ii).pos.y -stations.get(ii).value-25);
+    
+    pushMatrix();
+    translate(transX + stations.get(ii).posX,transY + stations.get(ii).posY -stations.get(ii).value-25);
+    stroke(0);
+    popMatrix();
+      
+    fill(#000000);
+    textAlign(CENTER);
+    textSize(12);
+    
+    if(drawData==0){
+    text(stations.get(ii).sName+"\n"+stations.get(ii).v1+""+stations.get(ii).v2+"명",transX + stations.get(ii).posX,transY + stations.get(ii).posY -stations.get(ii).value-25);
+    }
+    else{
+      text(stations.get(ii).sName+"\n"+stations.get(ii).v1+"명",transX + stations.get(ii).posX,transY + stations.get(ii).posY -stations.get(ii).value-25);
+    }
+    }
+    
   }
-  else{
-    text(stations.get(ii).sName+"\n"+stations.get(ii).v1+"명",transX + stations.get(ii).pos.x,transY + stations.get(ii).pos.y -stations.get(ii).value-25);
-  }
-  }
   
-}
-   
-  //--------------- Clock ----------------//
-  
+ //----------- event Click -----------//
+
+ if(eventClick){
+  shape(btnE, transX + 246.5, transY + 82, 180,557); 
+ }
+ 
+ if(eventSelect == -1){
+     shape(btn1, transX + 247.896, transY + 48.152 , 179, 34);
+ }
+ else{
+   PShape btnSelect = loadShape("https://JinkiKim.github.io/processing/svg/event" + eventSelect + ".svg", "svg");
+     shape(btnSelect, transX + 247.896, transY + 48.152,179,34);
+ }
+  shape(btn2, transX + 471.118, transY + 48.152 , 179, 34);
+  shape(btn3, transX + 664.479, transY + 48.152 , 179, 34);
+
  update(mouseX, mouseY);
 }
 void dateSelect(int clickMonth, int clickDay, int clickTime){
@@ -312,17 +329,15 @@ void dateSelect(int clickMonth, int clickDay, int clickTime){
          for( int i=0; i<ncsv.getRowCount(); i++){
            meanVal += ncsv.getInt(i,clickTime+1)/ncsv.getRowCount();
          }
-           
-           System.out.println(meanVal+"");
-           
+                      
          for( int i =0; i<ncsv.getRowCount();i++){
-           //Point p,String name,int l,int val,int val2
-           
+
           int valK = ncsv.getInt(i,clickTime+1);
           
            stations.add(
              new Station(
-               new Point((int)ncsv.getFloat(i,26),(int)ncsv.getFloat(i,27)),
+               (int)ncsv.getFloat(i,26),
+               (int)ncsv.getFloat(i,27),
                ncsv.getString(i,0),
                ncsv.getInt(i,28),
                valK,
@@ -331,14 +346,6 @@ void dateSelect(int clickMonth, int clickDay, int clickTime){
          
          
 }
-//void drawStation(float x, float y, float radius){
-//  
-//  noStroke();
-//  fill(radius*4+100,radius*4+80,radius*4+60,200);
-//  ellipseMode(RADIUS);
-//  ellipse(x, y,radius,radius); 
-// // 253 227 144
-//}
 void drawStroke(float x, float y, float radius, int li,int alpha,int weight){
   
      ellipseMode(RADIUS);
@@ -458,7 +465,7 @@ void drawGradient(float x, float y, float radius, int mode) {
 
  float col = 110;
 
-  for (int r = (int)radius; r > 0; r--) {
+  for (int r = (int)radius; r > 0; r-=1) {
     
     if(col <0){
       col = 0;
@@ -474,7 +481,7 @@ void drawGradient(float x, float y, float radius, int mode) {
         drawStroke(x , y , r,-3 , (int)col,3);
       }
       else if(25 < radius & radius <= 40){
-        drawStroke(x , y, r, -4 , (int)col, 3);
+        drawStroke(x , y, r, -4 , (int)col,3);
       }
       else if(radius >40){
         drawStroke(x,y,r,-5,(int)col,3);
@@ -487,18 +494,18 @@ void drawGradient(float x, float y, float radius, int mode) {
     
   }
 }
-void mouseWheel(MouseWheelEvent event) {
-  
-  //--------------- Zoom ---------------//
-      zoom += event.getWheelRotation()*.02;
- 
-      if(zoom <0.7)
-        zoom = 0.7;
-        
-  // xs = (1- zoom) * mouseX;
-  // ys = (1- zoom) * mouseY;
- 
-}
+//void mouseWheel(MouseWheelEvent event) {
+//  
+//  //--------------- Zoom ---------------//
+//      zoom += event.getWheelRotation()*.02;
+// 
+//      if(zoom <0.7)
+//        zoom = 0.7;
+//        
+//  // xs = (1- zoom) * mouseX;
+//  // ys = (1- zoom) * mouseY;
+// 
+//}
 
 void update(int x, int y) {
   
@@ -528,40 +535,50 @@ void mouseDragged(){
   
   if(!dragging){
     dragging = true;
-    drag.x = mouseX;
-    drag.y = mouseY;
+    dragX = mouseX;
+    dragY = mouseY;
   }
   
-  transX = present.x + (mouseX - drag.x);
-  transY = present.y + (mouseY - drag.y);
+  transX = presentX + (mouseX - dragX);
+  transY = presentY + (mouseY - dragY);
   
   if(transX > 0){
     transX = 0;
-    drag.x = mouseX;
+    dragX = mouseX;
   }
   if(transY > 0){
     transY = 0;
-    drag.y = mouseY;
-  } 
-  
-    
-//  if(transX < 1600*(1-zoom)){
-//    transX = (int)(1600*(1-zoom));
-//    drag.x = mouseX;
-//  }
-//  
-//  if(transY < 1100*(1-zoom)){
-//    transY = (int)(1100*(1-zoom));  
-//    drag.y = mouseY;
-//  }
-  
+    dragY = mouseY;
+  }
 }
 void mouseClicked(){
    dragging = true;
+   
+   if(overRect(transX+247.896,transY+48.152,179,34) & !eventClick){
+     eventClick = true;
+   }
+   else if(!overRect(transX+247.896,transY+82,180,557) & eventClick){
+     eventClick = false;
+     eventSelect = -1;
+   }
+   
+   for( int i = 0; i<16; i++){
+     if(overRect(transX+247.896, transY+82+34*i,179,34) & eventClick){
+        eventSelect = i;
+        eventClick = false;
+     }
+   }
+//   else if(overRect(transX+247.896,transY+48.152,179,34) & eventClick){
+
+   
+//   if(overRect(
+//   {
+//     
+//   }
 }
 void mouseReleased(){
-  present.x = transX;
-  present.y = transY;
+  presentX = transX;
+  presentY = transY;
   dragging = false;
 }
 boolean overRect(float x, float y, int width, int height)  {
@@ -586,32 +603,4 @@ boolean overCircle(float x, float y, float diameter) {
       return false;
     }
 }
-//int milTime(int h, int m, int s){
-// 
-// int mills = h*60*60 + m*60 + s;
-// 
-//return mills;  
-//}
-//
-//float timeCheck(String x , String y){
-//
-//  int gap = 0;
-//  
-//  String[] times1 = splitTokens(x, ":");
-//  String[] times2 = splitTokens(y, ":");
-// 
-//  int mills1 = milTime(Integer.parseInt(times1[0]),Integer.parseInt(times1[1]),Integer.parseInt(times1[2]));
-//  int mills2 = milTime(Integer.parseInt(times2[0]),Integer.parseInt(times2[1]),Integer.parseInt(times2[2]));
-//  
-//  gap = mills2 - mills2;
-//  
-//  return gap;
-//}
-//void menuSelect(){
-//   if(overRect()){
-//   }
-//   else if(overRect()){
-//   }
-//   else if(over 
-//}
 
