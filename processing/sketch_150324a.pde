@@ -77,7 +77,7 @@ class Station{
         line = l;
         v1 = val;
         v2 = val2;
-        if(drawData.equals(0)){
+        if(drawData ==0){
           value = (int)(val/250);
         }
         else{
@@ -98,10 +98,16 @@ void setup(){
   
   //-------- background Image --------//
   size(1600,1100);
-  bg = loadShape("./bgimg.svg");
-  btn1 = loadShape("./event.svg");
-  btn2 = loadShape("./monthday.svg");
-  btn3 = loadShape("./time.svg");
+ // bg = loadShape("./bgimg.svg");
+ String url = "https://JinkiKim.github.io/processing/bgimg.svg";
+  bg = loadShape(url,"svg");
+ String urlbtn1 = "https://JinkiKim.github.io/processing/event.svg";
+ String urlbtn2 = "https://JinkiKim.github.io/processing/monthday.svg";
+ String urlbtn3 = "https://JinkiKim.github.io/processing/time.svg";
+
+  btn1 = loadShape(urlbtn1,"svg");
+  btn2 = loadShape(urlbtn2,"svg");
+  btn3 = loadShape(urlbtn3,"svg");
   xs = 0;
   ys = 0;
   xo = width;
@@ -124,8 +130,8 @@ void setup(){
         String a2;
         int a3,a5;
         String a6 = null;
-       
-         csv = loadTable("./stationT.csv");
+        String urlsT = "https://JinkiKim.github.io/processing/stationT.csv";
+         csv = loadTable(urlsT,"csv");
        
        for(int i = 0; i < csv.getRowCount(); i++){  
     
@@ -135,14 +141,14 @@ void setup(){
        a3 = csv.getInt(i,3);
        a5 = csv.getInt(i,5);
        
-           while( a6.equals(null)){
+           while( a6==null){
              a6= csv.getString(i,6);
            }
          
-         if(a6.length().equals(3)){
+         if(a6.length()==3){
            a6 = "0" + a6;
          }
-         else if(a6.length().equals(2)){
+         else if(a6.length()==2){
            a6 = "00" + a6;
          }
          
@@ -255,7 +261,7 @@ void draw(){
   textAlign(CENTER);
   textSize(12);
   
-  if(drawData.equals(0)){
+  if(drawData==0){
   text(stations.get(ii).sName+"\n"+stations.get(ii).v1+""+stations.get(ii).v2+"명",transX + stations.get(ii).pos.x,transY + stations.get(ii).pos.y -stations.get(ii).value-25);
   }
   else{
@@ -297,7 +303,9 @@ void dateSelect(int clickMonth, int clickDay, int clickTime){
        drawData=1;
        float meanVal = 0;
        
-       ncsv = loadTable("./date/"+clickDate + ".csv");
+       clickDate = "https://JinkiKim.github.io/processing/date/" + clickDate + ".csv";
+
+       ncsv = loadTable(clickDate, "csv");
          
          stations.clear();
          
@@ -458,7 +466,7 @@ void drawGradient(float x, float y, float radius, int mode) {
     else
       col -= 110/radius;
   
-    if(mode.equals(0)){
+    if(mode==0){
       if(0 < radius & radius <= 10){
         drawStroke(x , y , r,-2 , (int)col,3);
       }
@@ -472,7 +480,7 @@ void drawGradient(float x, float y, float radius, int mode) {
         drawStroke(x,y,r,-5,(int)col,3);
       }
     }
-    else if(mode.equals(1)){
+    else if(mode==1){
       drawStroke(x , y , r,-1, (int)col,3);
     }
     
