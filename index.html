@@ -6,9 +6,7 @@
 
 <!-- load D3plus after D3js -->
 <script src="http://www.d3plus.org/js/d3plus.js"></script>
-<script src=“data.js"></script>
-
-
+<script src="data.js"></script>
 <!-- create container element for visualization -->
 <div id="viz"></div>
 
@@ -16,6 +14,7 @@
 
   // create list of node connections
   var connections = data
+
   // instantiate d3plus
   var visualization = d3plus.viz()
     .container("#viz")  // container DIV to hold the visualization
