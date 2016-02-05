@@ -6,21 +6,23 @@
 
 <!-- load D3plus after D3js -->
 <script src="http://www.d3plus.org/js/d3plus.js"></script>
-<script src="data.js"></script>
+<script type="text/javascript" src="data.js"></script>
 <!-- create container element for visualization -->
 <div id="viz"></div>
 
 <script>
 
-  // create list of node connections
-  var connections = data
+// create list of node connections
+var connections = DATA;
+alert(DATA[0].source);
+alert(DATA[0].target);
 
   // instantiate d3plus
   var visualization = d3plus.viz()
     .container("#viz")  // container DIV to hold the visualization
     .type("rings")      // visualization type
     .edges(connections) // list of node connections
-    .focus("alpha")     // ID of the initial center node
+    .focus("ADORA1(134)")     // ID of the initial center node
     .draw()             // finally, draw the visualization!
 
 </script>
